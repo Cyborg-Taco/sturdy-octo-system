@@ -17,32 +17,28 @@
     }
 
     #clueBox {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 600px;
-  z-index: 10000; /* VERY high */
-}
-
-button {
-  position: relative;
-  z-index: 10001; /* above everything */
-}
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 600px;
+      z-index: 10000;
+    }
 
     button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+      z-index: 10001;
     }
 
     video {
-  position: absolute;
-  width: 300px;
-  pointer-events: none; /* prevents blocking clicks */
-  z-index: 1;
-}
+      position: absolute;
+      width: 300px;
+      pointer-events: none;
+      z-index: 1;
+    }
 
     #dvdLogo {
       position: absolute;
@@ -92,81 +88,56 @@ button {
     return { x, y };
   }
 
-  function placeVideo(vid, avoidOverlap = true) {
+  function placeVideo(vid) {
     const width = 300;
     const height = 200;
 
-    if (avoidOverlap) {
-      const pos = getSafePosition(width, height);
-      vid.style.left = pos.x + "px";
-      vid.style.top = pos.y + "px";
+    const pos = getSafePosition(width, height);
+    vid.style.left = pos.x + "px";
+    vid.style.top = pos.y + "px";
 
-      // update stored position
-      vid._pos = { x: pos.x, y: pos.y, w: width, h: height };
-    }
+    vid._pos = { x: pos.x, y: pos.y, w: width, h: height };
   }
 
- function createVideo(src, options = {}) {
-  const vid = document.createElement("video");
-  vid.src = src;
-  vid.loop = true;
-  vid.autoplay = true;
+  function createVideo(src, options = {}) {
+    const vid = document.createElement("video");
+    vid.src = src;
+    vid.loop = true;
+    vid.autoplay = true;
 
-  // Start muted to guarantee autoplay
-  vid.muted = true;
+    // Start muted for autoplay safety
+    vid.muted = true;
 
-  // After it starts, unmute
-  vid.addEventListener("canplay", () => {
-    vid.muted = false;
-    vid.volume = 1.0;
-  });
+    // Unmute AFTER play starts (fixes browser blocking)
+    vid.onplaying = () => {
+      vid.muted = false;
+      vid.volume = 0.5;
+    };
 
-  if (options.center) {
-    vid.style.top = "50%";
-    vid.style.left = "50%";
-    vid.style.transform = "translate(-50%, -50%)";
-  } else if (options.bottomRight) {
-    vid.style.bottom = "0px";
-    vid.style.right = "0px";
-  } else {
-    placeVideo(vid);
-  }
-
-  if (!options.bottomRight) {
-    vid.addEventListener("ended", () => {
-      placedVideos.length = 0;
-      document.querySelectorAll("video").forEach(v => {
-        if (v !== vid && v._pos) placedVideos.push(v._pos);
-      });
+    if (options.center) {
+      vid.style.top = "50%";
+      vid.style.left = "50%";
+      vid.style.transform = "translate(-50%, -50%)";
+    } else if (options.bottomRight) {
+      vid.style.bottom = "0px";
+      vid.style.right = "0px";
+    } else {
       placeVideo(vid);
-    });
-  }
+    }
 
-  document.body.appendChild(vid);
-
-  if (!options.center && !options.bottomRight) {
-    placedVideos.push(vid._pos);
-  }
-
-  return vid;
-}
-
-    // reposition on loop (except video4)
+    // Move on loop (except video4)
     if (!options.bottomRight) {
       vid.addEventListener("ended", () => {
-        // reset stored positions
         placedVideos.length = 0;
         document.querySelectorAll("video").forEach(v => {
           if (v !== vid && v._pos) placedVideos.push(v._pos);
         });
-
         placeVideo(vid);
       });
     }
 
     document.body.appendChild(vid);
 
-    // store initial position
     if (!options.center && !options.bottomRight) {
       placedVideos.push(vid._pos);
     }
@@ -197,19 +168,19 @@ button {
       x += dx;
       y += dy;
 
-      let hitEdge = false;
+      let hit = false;
 
       if (x <= 0 || x >= maxX) {
         dx *= -1;
-        hitEdge = true;
+        hit = true;
       }
 
       if (y <= 0 || y >= maxY) {
         dy *= -1;
-        hitEdge = true;
+        hit = true;
       }
 
-      if (hitEdge) {
+      if (hit) {
         dvd.style.filter = randomColorFilter();
       }
 
@@ -225,11 +196,15 @@ button {
   function startExperience() {
     document.getElementById("clueBox").style.display = "none";
 
-    document.getElementById("bgSound").play();
+    // Play background sound (guaranteed by click)
+    const audio = document.getElementById("bgSound");
+    audio.play().catch(() => {});
 
     startDVD();
 
-    createVideo("video1.mp4", { center: true });
+    setTimeout(() => {
+      createVideo("video1.mp4", { center: true });
+    }, 100);
 
     setTimeout(() => {
       createVideo("video2.mp4");
