@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>get trolled</title>
 
-  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 
   <style>
@@ -90,12 +89,19 @@
     return vid;
   }
 
+  function randomColorFilter() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hue-rotate(${hue}deg) saturate(2)`;
+  }
+
   function startDVD() {
     const dvd = document.getElementById("dvdLogo");
     dvd.style.display = "block";
 
     let x = 100, y = 100;
     let dx = 2, dy = 2;
+
+    dvd.style.filter = randomColorFilter();
 
     function animate() {
       const maxX = window.innerWidth - dvd.offsetWidth;
@@ -104,8 +110,21 @@
       x += dx;
       y += dy;
 
-      if (x <= 0 || x >= maxX) dx *= -1;
-      if (y <= 0 || y >= maxY) dy *= -1;
+      let hitEdge = false;
+
+      if (x <= 0 || x >= maxX) {
+        dx *= -1;
+        hitEdge = true;
+      }
+
+      if (y <= 0 || y >= maxY) {
+        dy *= -1;
+        hitEdge = true;
+      }
+
+      if (hitEdge) {
+        dvd.style.filter = randomColorFilter();
+      }
 
       dvd.style.left = x + "px";
       dvd.style.top = y + "px";
@@ -119,17 +138,13 @@
   function startExperience() {
     document.getElementById("clueBox").style.display = "none";
 
-    // Play sound
     const audio = document.getElementById("bgSound");
     audio.play();
 
-    // Start DVD bounce
     startDVD();
 
-    // Video 1 (center)
     createVideo("video1.mp4", true);
 
-    // Other videos
     setTimeout(() => {
       createVideo("video2.mp4");
     }, 2000);
