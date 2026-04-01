@@ -178,7 +178,9 @@ function triggerJumpscare() {
 
 function startExperience() {
   document.getElementById("clueBox").style.display = "none";
-  document.getElementById("bgSound").play().catch(()=>{});
+  const bgSound = document.getElementById("bgSound");
+  bgSound.volume = 0.3;       // set volume to 30%
+  bgSound.play().catch(() => {});  // then play the audio
   startDVD();
 
   spawnVideo("video1.mp4",{center:true});
