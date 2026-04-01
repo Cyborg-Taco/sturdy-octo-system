@@ -22,6 +22,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       max-width: 600px;
+      z-index: 10;
     }
 
     button {
@@ -35,12 +36,14 @@
       position: absolute;
       width: 300px;
       pointer-events: none;
+      z-index: 1;
     }
 
     #dvdLogo {
       position: absolute;
       width: 120px;
       pointer-events: none;
+      z-index: 9999; /* FIX: always on top */
     }
   </style>
 </head>
@@ -98,9 +101,14 @@
     const dvd = document.getElementById("dvdLogo");
     dvd.style.display = "block";
 
-    let x = 100, y = 100;
-    let dx = 2, dy = 2;
+    // FIX: ensure it starts visibly
+    let x = 100;
+    let y = 100;
+    let dx = 2;
+    let dy = 2;
 
+    dvd.style.left = x + "px";
+    dvd.style.top = y + "px";
     dvd.style.filter = randomColorFilter();
 
     function animate() {
