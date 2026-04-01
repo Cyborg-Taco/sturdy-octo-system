@@ -39,7 +39,7 @@
       z-index: 1;
     }
 
-    #dvdLogo {
+    #DVDLogo {
       position: absolute;
       width: 120px;
       pointer-events: none;
@@ -59,7 +59,7 @@
 
 <audio id="bgSound" src="sound.mp3" loop></audio>
 
-<img id="dvdLogo" src="dvd.png" style="display:none;">
+<img id="DVDLogo" src="DVD.png" style="display:none;">
 
 <script>
   function randomPosition(video) {
@@ -98,8 +98,8 @@
   }
 
   function startDVD() {
-    const dvd = document.getElementById("dvdLogo");
-    dvd.style.display = "block";
+    const DVD = document.getElementById("DVDLogo");
+    DVD.style.display = "block";
 
     // FIX: ensure it starts visibly
     let x = 100;
@@ -107,13 +107,13 @@
     let dx = 2;
     let dy = 2;
 
-    dvd.style.left = x + "px";
-    dvd.style.top = y + "px";
-    dvd.style.filter = randomColorFilter();
+    DVD.style.left = x + "px";
+    DVD.style.top = y + "px";
+    DVD.style.filter = randomColorFilter();
 
     function animate() {
-      const maxX = window.innerWidth - dvd.offsetWidth;
-      const maxY = window.innerHeight - dvd.offsetHeight;
+      const maxX = window.innerWidth - DVD.offsetWidth;
+      const maxY = window.innerHeight - DVD.offsetHeight;
 
       x += dx;
       y += dy;
@@ -131,11 +131,11 @@
       }
 
       if (hitEdge) {
-        dvd.style.filter = randomColorFilter();
+        DVD.style.filter = randomColorFilter();
       }
 
-      dvd.style.left = x + "px";
-      dvd.style.top = y + "px";
+      DVD.style.left = x + "px";
+      DVD.style.top = y + "px";
 
       requestAnimationFrame(animate);
     }
