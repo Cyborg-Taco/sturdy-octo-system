@@ -21,7 +21,6 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      max-width: 600px;
       z-index: 10000;
     }
 
@@ -29,7 +28,6 @@
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
-      cursor: pointer;
       z-index: 10001;
     }
 
@@ -43,8 +41,44 @@
     #dvdLogo {
       position: absolute;
       width: 120px;
-      pointer-events: none;
       z-index: 9999;
+    }
+
+    #jumpscare {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: red;
+      color: white;
+      font-size: 80px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 20000;
+    }
+
+    .shake {
+      animation: shake 0.1s infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(2px, 2px); }
+      25% { transform: translate(-2px, 2px); }
+      50% { transform: translate(2px, -2px); }
+      75% { transform: translate(-2px, -2px); }
+      100% { transform: translate(2px, 2px); }
+    }
+
+    .glitch {
+      animation: glitch 0.2s infinite;
+    }
+
+    @keyframes glitch {
+      0% { filter: hue-rotate(0deg); }
+      50% { filter: hue-rotate(180deg); }
+      100% { filter: hue-rotate(360deg); }
     }
   </style>
 </head>
@@ -58,96 +92,57 @@
   <button onclick="startExperience()">OK</button>
 </div>
 
-<audio id="bgSound" src="sound.mp3" loop></audio>
+<div id="jumpscare">YOU'VE BEEN TROLLED</div>
 
+<audio id="bgSound" src="sound.mp3" loop></audio>
 <img id="dvdLogo" src="DVD.png" style="display:none;">
 
 <script>
-  const placedVideos = [];
+  const videos = [];
 
-  function isOverlapping(x, y, w, h) {
-    return placedVideos.some(v => {
-      return !(
-        x + w < v.x ||
-        x > v.x + v.w ||
-        y + h < v.y ||
-        y > v.y + v.h
-      );
-    });
+  function randomPos(vid) {
+    vid.style.left = Math.random() * (window.innerWidth - 300) + "px";
+    vid.style.top = Math.random() * (window.innerHeight - 200) + "px";
   }
 
-  function getSafePosition(width, height) {
-    let x, y, tries = 0;
+  function spawnVideo(src, options = {}) {
+    const v = document.createElement("video");
+    v.src = src;
+    v.autoplay = true;
+    v.loop = true;
+    v.muted = true;
 
-    do {
-      x = Math.random() * (window.innerWidth - width);
-      y = Math.random() * (window.innerHeight - height);
-      tries++;
-    } while (isOverlapping(x, y, width, height) && tries < 50);
-
-    return { x, y };
-  }
-
-  function placeVideo(vid) {
-    const width = 300;
-    const height = 200;
-
-    const pos = getSafePosition(width, height);
-    vid.style.left = pos.x + "px";
-    vid.style.top = pos.y + "px";
-
-    vid._pos = { x: pos.x, y: pos.y, w: width, h: height };
-  }
-
-  function createVideo(src, options = {}) {
-    const vid = document.createElement("video");
-    vid.src = src;
-    vid.loop = true;
-    vid.autoplay = true;
-
-    // Start muted for autoplay safety
-    vid.muted = true;
-
-    // Unmute AFTER play starts (fixes browser blocking)
-    vid.onplaying = () => {
-      vid.muted = false;
-      vid.volume = 0.5;
+    v.onplaying = () => {
+      v.muted = false;
+      v.volume = 0.3;
     };
 
     if (options.center) {
-      vid.style.top = "50%";
-      vid.style.left = "50%";
-      vid.style.transform = "translate(-50%, -50%)";
+      v.style.top = "50%";
+      v.style.left = "50%";
+      v.style.transform = "translate(-50%, -50%)";
     } else if (options.bottomRight) {
-      vid.style.bottom = "0px";
-      vid.style.right = "0px";
+      v.style.bottom = "0";
+      v.style.right = "0";
     } else {
-      placeVideo(vid);
+      randomPos(v);
     }
 
-    // Move on loop (except video4)
     if (!options.bottomRight) {
-      vid.addEventListener("ended", () => {
-        placedVideos.length = 0;
-        document.querySelectorAll("video").forEach(v => {
-          if (v !== vid && v._pos) placedVideos.push(v._pos);
-        });
-        placeVideo(vid);
+      v.addEventListener("ended", () => {
+        randomPos(v);
+
+        // MULTIPLY
+        spawnVideo(src);
       });
     }
 
-    document.body.appendChild(vid);
-
-    if (!options.center && !options.bottomRight) {
-      placedVideos.push(vid._pos);
-    }
-
-    return vid;
+    document.body.appendChild(v);
+    videos.push(v);
   }
 
-  function randomColorFilter() {
-    const hue = Math.floor(Math.random() * 360);
-    return `hue-rotate(${hue}deg) saturate(2)`;
+  function randomColor() {
+    return `hue-rotate(${Math.random()*360}deg) saturate(2)`;
   }
 
   function startDVD() {
@@ -159,9 +154,8 @@
 
     dvd.style.left = x + "px";
     dvd.style.top = y + "px";
-    dvd.style.filter = randomColorFilter();
 
-    function animate() {
+    function move() {
       const maxX = window.innerWidth - dvd.offsetWidth;
       const maxY = window.innerHeight - dvd.offsetHeight;
 
@@ -171,52 +165,55 @@
       let hit = false;
 
       if (x <= 0 || x >= maxX) {
-        dx *= -1;
+        dx *= -1.1; // SPEED UP
         hit = true;
       }
 
       if (y <= 0 || y >= maxY) {
-        dy *= -1;
+        dy *= -1.1; // SPEED UP
         hit = true;
       }
 
-      if (hit) {
-        dvd.style.filter = randomColorFilter();
-      }
+      if (hit) dvd.style.filter = randomColor();
 
       dvd.style.left = x + "px";
       dvd.style.top = y + "px";
 
-      requestAnimationFrame(animate);
+      requestAnimationFrame(move);
     }
 
-    animate();
+    move();
+  }
+
+  function triggerJumpscare() {
+    const j = document.getElementById("jumpscare");
+    j.style.display = "flex";
+
+    document.body.classList.add("shake", "glitch");
+
+    setTimeout(() => {
+      j.style.display = "none";
+      document.body.classList.remove("shake", "glitch");
+    }, 2000);
   }
 
   function startExperience() {
     document.getElementById("clueBox").style.display = "none";
 
-    // Play background sound (guaranteed by click)
-    const audio = document.getElementById("bgSound");
-    audio.play().catch(() => {});
+    document.getElementById("bgSound").play().catch(()=>{});
 
     startDVD();
 
-    setTimeout(() => {
-      createVideo("video1.mp4", { center: true });
-    }, 100);
+    spawnVideo("video1.mp4", { center: true });
 
-    setTimeout(() => {
-      createVideo("video2.mp4");
-    }, 2000);
+    setTimeout(() => spawnVideo("video2.mp4"), 2000);
+    setTimeout(() => spawnVideo("video3.mp4"), 4000);
+    setTimeout(() => spawnVideo("video4.mp4", { bottomRight: true }), 6000);
 
-    setTimeout(() => {
-      createVideo("video3.mp4");
-    }, 4000);
-
-    setTimeout(() => {
-      createVideo("video4.mp4", { bottomRight: true });
-    }, 6000);
+    // random jumpscare
+    setInterval(() => {
+      if (Math.random() < 0.3) triggerJumpscare();
+    }, 5000);
   }
 </script>
 
