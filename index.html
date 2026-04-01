@@ -37,6 +37,12 @@
       width: 300px;
       pointer-events: none;
     }
+
+    #dvdLogo {
+      position: absolute;
+      width: 120px;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -51,6 +57,8 @@
 
 <audio id="bgSound" src="sound.mp3" loop></audio>
 
+<img id="dvdLogo" src="dvd.png" style="display:none;">
+
 <script>
   function randomPosition(video) {
     const maxX = window.innerWidth - 300;
@@ -60,7 +68,7 @@
     video.style.top = Math.random() * maxY + "px";
   }
 
-  function createVideo(src, centered = false) {
+  function createVideo(src, centered = false, bottomRight = false) {
     const vid = document.createElement("video");
     vid.src = src;
     vid.autoplay = true;
@@ -71,12 +79,41 @@
       vid.style.top = "50%";
       vid.style.left = "50%";
       vid.style.transform = "translate(-50%, -50%)";
+    } else if (bottomRight) {
+      vid.style.bottom = "0px";
+      vid.style.right = "0px";
     } else {
       randomPosition(vid);
     }
 
     document.body.appendChild(vid);
     return vid;
+  }
+
+  function startDVD() {
+    const dvd = document.getElementById("dvdLogo");
+    dvd.style.display = "block";
+
+    let x = 100, y = 100;
+    let dx = 2, dy = 2;
+
+    function animate() {
+      const maxX = window.innerWidth - dvd.offsetWidth;
+      const maxY = window.innerHeight - dvd.offsetHeight;
+
+      x += dx;
+      y += dy;
+
+      if (x <= 0 || x >= maxX) dx *= -1;
+      if (y <= 0 || y >= maxY) dy *= -1;
+
+      dvd.style.left = x + "px";
+      dvd.style.top = y + "px";
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
   }
 
   function startExperience() {
@@ -86,10 +123,13 @@
     const audio = document.getElementById("bgSound");
     audio.play();
 
-    // Video 1 (center)
-    const v1 = createVideo("video1.mp4", true);
+    // Start DVD bounce
+    startDVD();
 
-    // After it starts playing once, add more
+    // Video 1 (center)
+    createVideo("video1.mp4", true);
+
+    // Other videos
     setTimeout(() => {
       createVideo("video2.mp4");
     }, 2000);
@@ -99,7 +139,7 @@
     }, 4000);
 
     setTimeout(() => {
-      createVideo("video4.mp4");
+      createVideo("video4.mp4", false, true);
     }, 6000);
   }
 </script>
