@@ -101,23 +101,50 @@
     }
   }
 
-  function createVideo(src, options = {}) {
-    const vid = document.createElement("video");
-    vid.src = src;
-    vid.autoplay = true;
-    vid.loop = true;
-    vid.muted = true;
+ function createVideo(src, options = {}) {
+  const vid = document.createElement("video");
+  vid.src = src;
+  vid.loop = true;
+  vid.autoplay = true;
 
-    if (options.center) {
-      vid.style.top = "50%";
-      vid.style.left = "50%";
-      vid.style.transform = "translate(-50%, -50%)";
-    } else if (options.bottomRight) {
-      vid.style.bottom = "0px";
-      vid.style.right = "0px";
-    } else {
+  // Start muted to guarantee autoplay
+  vid.muted = true;
+
+  // After it starts, unmute
+  vid.addEventListener("canplay", () => {
+    vid.muted = false;
+    vid.volume = 1.0;
+  });
+
+  if (options.center) {
+    vid.style.top = "50%";
+    vid.style.left = "50%";
+    vid.style.transform = "translate(-50%, -50%)";
+  } else if (options.bottomRight) {
+    vid.style.bottom = "0px";
+    vid.style.right = "0px";
+  } else {
+    placeVideo(vid);
+  }
+
+  if (!options.bottomRight) {
+    vid.addEventListener("ended", () => {
+      placedVideos.length = 0;
+      document.querySelectorAll("video").forEach(v => {
+        if (v !== vid && v._pos) placedVideos.push(v._pos);
+      });
       placeVideo(vid);
-    }
+    });
+  }
+
+  document.body.appendChild(vid);
+
+  if (!options.center && !options.bottomRight) {
+    placedVideos.push(vid._pos);
+  }
+
+  return vid;
+}
 
     // reposition on loop (except video4)
     if (!options.bottomRight) {
